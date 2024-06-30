@@ -12,8 +12,17 @@ export const createUser = async (req: Request, res: Response) => {
             introduce
         } = req.body;
         
+        const existingUserId = await User.findOne({ where: { userId } });
+        if(existingUserId) {
+            return res.status(400).json({ error: '이미 사용 중인 아이디입니다.' })
+        }
+
+        const existingUserName = await User.findOne({ where: { userName } });
+        if(existingUserName) {
+            return res.status(400).json({ error: '이미 사용 중인 사용자 이름입니다.' })
+        }
+
         const defaultProfileImg = 'https://cdn-icons-png.flaticon.com/512/1361/1361876.png'
-        
         const user = await User.create({
             userId,
             password,
@@ -23,7 +32,9 @@ export const createUser = async (req: Request, res: Response) => {
             gitUrl: gitUrl || null, 
             introduce: introduce || null,
         });
-        res.status(201).json(user);
+
+        
+        res.status(201).json({ message : "회원가입이 성공적으로 이루어졌습니다." });
     } catch (error) {
         res.status(500).json({ error: '안타깝지만 회원가입에 실패하였습니다.' });
     }
