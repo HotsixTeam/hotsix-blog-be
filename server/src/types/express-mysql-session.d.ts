@@ -26,7 +26,15 @@ class MySQLStore extends session.Store {
 }
 declare module 'express-session' {
     interface SessionData {
-    user: { [key: string]: any };
+        userId: number;
+        user: {
+            id: number;
+            userId: string;
+            userName: string;
+            profileImg: string | null;
+            gitUrl: string | null;
+            introduce: string | null;
+        };
     }
 }
 export = MySQLStore;
