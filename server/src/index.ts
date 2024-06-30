@@ -1,6 +1,7 @@
 import express from 'express';
 import { sequelize } from './config/database';
 import userRoutes from './routes/user';
+import postRoutes from './routes/post';
 import dotenv from 'dotenv';
 import session from 'express-session';
 
@@ -23,7 +24,9 @@ app.use(session({
     }
 }));
 
-app.use('/api', userRoutes); // API 라우트를 '/api' 경로에 연결
+app.use('/api/users', userRoutes);
+app.use('/api/posts', postRoutes);
+
 sequelize.authenticate() // 데이터베이스 연결 확인
     .then(() => {
         console.log('연결. 성공적.'); // 성공적으로 연결되면 로그 출력

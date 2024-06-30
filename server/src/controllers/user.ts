@@ -7,7 +7,6 @@ export const createUser = async (req: Request, res: Response) => {
             userId,
             password,
             userName,
-            createdAt,
             profileImg,
             gitUrl,
             introduce
@@ -19,10 +18,10 @@ export const createUser = async (req: Request, res: Response) => {
             userId,
             password,
             userName,
-            createdAt,
+            createdAt: new Date(),
             profileImg: profileImg || defaultProfileImg, 
-            gitUrl: gitUrl, 
-            introduce: introduce
+            gitUrl: gitUrl || null, 
+            introduce: introduce || null,
         });
         res.status(201).json(user);
     } catch (error) {
@@ -54,7 +53,15 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     // 세션에 사용자 정보 저장
-    req.session.user = user; // 세션에 해당 유저 저장하고 이를 위해서는 타입을 확장해야한다.
+    req.session.userId = user.id;
+    req.session.user = {
+        id: user.id,
+        userId: user.userId,
+        userName: user.userName,
+        profileImg: user.profileImg,
+        gitUrl: user.gitUrl,
+        introduce: user.introduce
+    };
     console.log("User Logged In: ", user);
     // console.log("Session Data: ", req.session);
 
@@ -63,15 +70,20 @@ export const loginUser = async (req: Request, res: Response) => {
     res.status(500).json({ error: '로그인에 실패하셨습니다.' });
     }
 };
-// 세션 유효성 확인 함수
 export const checkSession = async (req: Request, res: Response) => {
     if (!req.session.user) {
         return res.status(401).json({ message: '세션이 유효하지 않습니다.' });
     }
 
+    // 세션에 저장된 사용자 정보로 데이터베이스에서 사용자 조회
+    console.log(req.session.user)
+    const user = await User.findByPk(req.session.user.id);
+    if (!user) {
+        return res.status(404).json({ error: '사용자를 찾을 수 없다.' });
+    }
+
     res.status(200).json({ message: '세션이 유효합니다.', user: req.session.user });
 };
-
 // 로그아웃 함수
 export const logoutUser = async (req: Request, res: Response) => {
     console.log(req.session)
