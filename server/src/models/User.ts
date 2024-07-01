@@ -31,7 +31,8 @@ User.init({
     },
     userName: {
         type: DataTypes.STRING(45),
-        allowNull: false
+        allowNull: false,
+        unique: true
     },
     createdAt: {
         type: DataTypes.DATE,
@@ -53,5 +54,5 @@ User.init({
 }, {
     sequelize,
     tableName: 'users',
-    timestamps: false  // 모델에 'createdAt'과 'updatedAt' 타임스탬프를 자동으로 추가하지 않음
+    timestamps: false
 });

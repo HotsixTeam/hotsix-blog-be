@@ -46,9 +46,10 @@ export const getUser = async (req: Request, res: Response) => {
         if (user) {
             res.status(200).json(user);
         } else {
-        res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+            res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
         }
     } catch (error) {
+        console.log(error)
         res.status(500).json({ error: '회원 조회에 실패하였습니다.' });
     }
 };

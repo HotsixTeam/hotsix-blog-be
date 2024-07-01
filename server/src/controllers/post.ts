@@ -6,7 +6,7 @@ export const getPosts = async (req : Request, res : Response) => {
     try {
         const userId = req.session.userId; // 세션에서 가져오는 정보
         if (!userId) { 
-            return res.status(401).json({ error: 'Unauthorized' });
+            return res.status(401).json({ error: '글을 조회할 수 있는 권한이 없습니다.' });
         }
 
         const page = parseInt(req.query.page as string, 10) || 1;
@@ -45,17 +45,16 @@ export const getPosts = async (req : Request, res : Response) => {
             },
         });
     } catch (error) {
-        console.error('게시글 조회에 실패하였습니다.', error);
         res.status(500).json({ error: '게시글 조회에 실패하였습니다.' });
     }
 }
 
-export const postCreate = async (req: Request, res: Response) => {
+export const createPost = async (req: Request, res: Response) => {
     try {
         const defaultPostImg = 'https://cdn-icons-png.flaticon.com/512/3875/3875148.png'
         const userId = req.session.userId; // 세션에서 가져오는 정보
         if (!userId) { 
-            return res.status(401).json({ error: 'Unauthorized' });
+            return res.status(401).json({ error: '글을 생성할 수 있는 권한이 없습니다.' });
         }
         // request body에서 받는 정보 5가지
         const { thumb, title, description, content, showStatus } = req.body;
@@ -69,7 +68,7 @@ export const postCreate = async (req: Request, res: Response) => {
             createdAt: new Date(),
             updatedAt: new Date()
         })
-        res.status(201).json(newPost);
+        res.status(201).json({message: '게시글 생성 완료'});
     } catch (error) {
         res.status(500).json({ error: '게시글 생성에 실패하였습니다.' });
     }
@@ -80,7 +79,7 @@ export const getPostById = async (req: Request, res: Response)  => {
         
         const userId = req.session.userId; // 세션에서 가져오는 정보
         if (!userId) { 
-            return res.status(401).json({ error: 'Unauthorized' });
+            return res.status(401).json({ error: '글을 조회할 수 있는 권한이 없습니다.' });
         }
 
         const postId = req.params.id;
@@ -123,7 +122,7 @@ export const updatePostById = async (req: Request, res: Response)  => {
         // 세션에서 userId 가져오기
         const userId = req.session.userId;
         if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+            return res.status(401).json({ error: "글을 수정할 수 있는 권한이 없습니다." });
         }
 
         const post = await Post.findOne({
@@ -158,7 +157,7 @@ export const deletePostById = async (req: Request, res: Response)  => {
         const userId = req.session.userId;
 
         if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
+            return res.status(401).json({ error: '글을 삭제할 수 있는 권한이 없습니다.' });
         }
 
         const post = await Post.findOne({
@@ -169,11 +168,11 @@ export const deletePostById = async (req: Request, res: Response)  => {
         }
 
         if(post.userId !== userId) {
-            return res.status(403).json({ error : '권한이 없습니다.' })
+            return res.status(403).json({ error : '글을 삭제할 수 있는 권한이 없습니다.' })
         }
         
         await post.destroy();
-        res.status(200).json({ message: '게시글이 삭제되었습니다.' });
+        res.status(200).json({ message: '게시글 삭제 완료.' });
         
     } catch (error) {
         res.status(500).json({ error: '게시글 삭제에 실패하였습니다.' });
