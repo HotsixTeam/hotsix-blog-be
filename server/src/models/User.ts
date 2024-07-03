@@ -1,17 +1,22 @@
-// server/models/User.ts
-
-import { Model, DataTypes } from 'sequelize';
+import { Model, DataTypes, Association } from 'sequelize';
 import { sequelize } from '../config/database';
+import { Post } from './Post';
+import { Like } from './Like';
 
 export class User extends Model {
     public id!: number;
-    public userId!: string;  // Unique, 이메일로 사용
+    public userId!: string;
     public password!: string;
     public userName!: string;
     public createdAt!: Date;
     public profileImg!: string | null;
     public gitUrl!: string | null;
     public introduce!: string | null;
+
+    public static associations: {
+        posts: Association<User, Post>;
+        likes: Association<User, Like>;
+    };
 }
 
 User.init({
@@ -23,36 +28,36 @@ User.init({
     userId: {
         type: DataTypes.STRING(255),
         allowNull: false,
-        unique: true
+        unique: true,
     },
     password: {
         type: DataTypes.STRING(255),
-        allowNull: false
+        allowNull: false,
     },
     userName: {
         type: DataTypes.STRING(45),
         allowNull: false,
-        unique: true
+        unique: true,
     },
     createdAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        defaultValue: DataTypes.NOW
+        defaultValue: DataTypes.NOW,
     },
     profileImg: {
         type: DataTypes.STRING(255),
-        allowNull: true
+        allowNull: true,
     },
     gitUrl: {
         type: DataTypes.STRING(255),
-        allowNull: true
+        allowNull: true,
     },
     introduce: {
         type: DataTypes.TEXT,
-        allowNull: true
-    }
+        allowNull: true,
+    },
 }, {
     sequelize,
     tableName: 'users',
-    timestamps: false
+    timestamps: false,
 });

@@ -4,6 +4,7 @@ import userRoutes from './routes/user';
 import postRoutes from './routes/post';
 import dotenv from 'dotenv';
 import session from 'express-session';
+import './models/associations'; 
 
 dotenv.config();
 

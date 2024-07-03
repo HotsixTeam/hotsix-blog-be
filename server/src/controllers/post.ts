@@ -36,6 +36,7 @@ export const getPosts = async (req : Request, res : Response) => {
                 createdAt: post.createdAt,
                 updatedAt: post.updatedAt,
                 showStatus: post.showStatus,
+                likeCount: post.likeCount,
             })),
             pagination: {
                 totalItems: count, // 총 게시글
@@ -108,6 +109,7 @@ export const getPostById = async (req: Request, res: Response)  => {
             createdAt: post.createdAt,
             updatedAt: post.updatedAt,
             showStatus: post.showStatus,
+            likeCount: post.likeCount,
         })
     } catch (error) {
         return res.status(500).json({ error: '게시글 조회에 실패하였습니다.' });

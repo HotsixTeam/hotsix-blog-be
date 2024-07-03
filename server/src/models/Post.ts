@@ -1,25 +1,11 @@
 import { Model, DataTypes, Association } from 'sequelize';
 import { sequelize } from '../config/database';
 import { User } from './User';
-
-// 여기서 Model이 의미하는 바는 
-// 'sequelize' 라이브러리에서 테이블을 객체로서 표현하기 위해 사용하는 클래스
-
-// Table posts {
-//     id integer [pk, increment] // Primary Key, Auto Increment
-//     userId integer [ref: > users.userId, not null] // Foreign Key
-//     thumb varchar(300)
-//     title varchar(100) [not null]
-//     description varchar(150)
-//     content longtext [not null]
-//     createdAt timestamp [not null]
-//     updatedAt timestamp
-//     showStatus boolean
-// }
+import { Like } from './Like';
 
 export class Post extends Model {
     public id!: number; 
-    public userId!: number; // 유저 id (pk)
+    public userId!: number;
     public thumb!: string;
     public title!: string;
     public description!: string;
@@ -27,13 +13,14 @@ export class Post extends Model {
     public createdAt!: Date;
     public updatedAt!: Date;
     public showStatus!: boolean;
+    public likeCount!: number;
 
-    // User 모델과의 연관성을 나타내는 속성을 추가.
     public user?: User;
 
     public static associations: {
+        likes: Association<Post, Like>;
         user: Association<Post, User>;
-    };    
+    };
 }
 
 Post.init({
@@ -74,15 +61,19 @@ Post.init({
     updatedAt: {
         type: DataTypes.DATE,
         allowNull: false,
+        defaultValue: DataTypes.NOW,
     },
     showStatus: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
     },
+    likeCount: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: false,
+        defaultValue: 0,
+    },
 }, {
-    sequelize, // 시퀄라이즈 인스턴스
-    tableName: 'posts', // 데이터베이스 테이블 이름
-    timestamps: true, // createdAt과 updatedAt 컬럼을 자동으로 추가
+    sequelize,
+    tableName: 'posts',
+    timestamps: true,
 });
-
-Post.belongsTo(User, { foreignKey: 'userId', as: 'user' });
