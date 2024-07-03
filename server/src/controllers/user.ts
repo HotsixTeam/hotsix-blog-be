@@ -36,7 +36,7 @@ export const createUser = async (req: Request, res: Response) => {
         
         res.status(201).json({ message : "회원가입이 성공적으로 이루어졌습니다." });
     } catch (error) {
-        res.status(500).json({ error: '안타깝지만 회원가입에 실패하였습니다.' });
+        res.status(500).json({ error: '회원가입에 실패하였습니다.' });
     }
 };
 
@@ -57,27 +57,32 @@ export const getUser = async (req: Request, res: Response) => {
 // 로그인 함수
 export const loginUser = async (req: Request, res: Response) => {
     try {
-    const { userId, password } = req.body;
-    const user = await User.findOne({ where: { userId } }); // 찾고
+        const { userId, password } = req.body;
+        const user = await User.findOne({ where: { userId } }); // 찾고
 
-    if (!user || user.password !== password) { // 일치여부 확인 후
-        return res.status(401).json({ message: '옳지 않은 아이디 또는 비밀번호 입니다.' });
-    }
+        if (!user) { // user가 null인지 확인
+            return res.status(401).json({ message: '옳지 않은 아이디 또는 비밀번호 입니다.' });
+        }
+        
+        const isMatch = await user.validPassword(password);
+        if (!isMatch) {
+            return res.status(401).json({ message: '옳지 않은 아이디 또는 비밀번호 입니다.' });
+        }
 
-    // 세션에 사용자 정보 저장
-    req.session.userId = user.id;
-    req.session.user = {
-        id: user.id,
-        userId: user.userId,
-        userName: user.userName,
-        profileImg: user.profileImg,
-        gitUrl: user.gitUrl,
-        introduce: user.introduce
-    };
-    console.log("User Logged In: ", user);
-    // console.log("Session Data: ", req.session);
+        // 세션에 사용자 정보 저장
+        req.session.userId = user.id;
+        req.session.user = {
+            id: user.id,
+            userId: user.userId,
+            userName: user.userName,
+            profileImg: user.profileImg,
+            gitUrl: user.gitUrl,
+            introduce: user.introduce
+        };
+        console.log("User Logged In: ", user);
+        // console.log("Session Data: ", req.session);
 
-    res.status(200).json({ message: '로그인에 성공하셨습니다.', userId: user.id });
+        res.status(200).json({ message: '로그인에 성공하셨습니다.', userId: user.id });
     } catch (error) {
     res.status(500).json({ error: '로그인에 실패하셨습니다.' });
     }

@@ -2,6 +2,7 @@ import { Model, DataTypes, Association } from 'sequelize';
 import { sequelize } from '../config/database';
 import { Post } from './Post';
 import { Like } from './Like';
+import bcrypt from 'bcrypt';
 
 export class User extends Model {
     public id!: number;
@@ -17,6 +18,10 @@ export class User extends Model {
         posts: Association<User, Post>;
         likes: Association<User, Like>;
     };
+    // 비밀번호 검증 메서드 추가
+    public validPassword(password: string): Promise<boolean> {
+        return bcrypt.compare(password, this.password);
+    }   
 }
 
 User.init({
@@ -60,4 +65,18 @@ User.init({
     sequelize,
     tableName: 'users',
     timestamps: false,
+    hooks: {
+        beforeCreate: async (user: User) => {
+            if (user.password) {
+                const salt = await bcrypt.genSalt(10);
+                user.password = await bcrypt.hash(user.password, salt);
+            }
+        },
+        beforeUpdate: async (user: User) => {
+            if (user.password) {
+                const salt = await bcrypt.genSalt(10);
+                user.password = await bcrypt.hash(user.password, salt);
+            }
+        }
+    }
 });
