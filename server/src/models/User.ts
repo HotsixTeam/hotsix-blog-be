@@ -21,7 +21,7 @@ export class User extends Model {
     // 비밀번호 검증 메서드 추가
     public validPassword(password: string): Promise<boolean> {
         return bcrypt.compare(password, this.password);
-    }   
+    }
 }
 
 User.init({
@@ -60,7 +60,7 @@ User.init({
     introduce: {
         type: DataTypes.TEXT,
         allowNull: true,
-    },
+    }
 }, {
     sequelize,
     tableName: 'users',
