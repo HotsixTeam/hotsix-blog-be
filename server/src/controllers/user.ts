@@ -1,47 +1,70 @@
 import { Request, Response } from "express";
 import { User } from "../models/User";
+import { Verify } from "../models/Verify";
+import { sequelize } from "../config/database";
 
+// 이메일 인증 -> 코드 확인 -> 회원가입 가능
 export const createUser = async (req: Request, res: Response) => {
+  let transaction;
   try {
+    transaction = await sequelize.transaction();
+
     const { userId, password, userName, profileImg, gitUrl, introduce } = req.body;
 
     const existingUserId = await User.findOne({ where: { userId } });
     if (existingUserId) {
-      return res.status(400).json({ error: "이미 사용 중인 아이디입니다." });
+      await transaction.rollback();
+      return res.status(400).json({ error: "이미 사용 중인 아이디(이메일)입니다." });
     }
+    const verifyInfo = await Verify.findOne({ where: { email: userId } });
 
+    if (!verifyInfo || !verifyInfo.isVerified) {
+      await transaction.rollback();
+      return res.status(400).json({ error: "가입을 진행할 수 있는 상태가 아닙니다. 아이디(이메일) 인증을 먼저 완료하세요." });
+    }
     const existingUserName = await User.findOne({ where: { userName } });
     if (existingUserName) {
+      await transaction.rollback();
       return res.status(400).json({ error: "이미 사용 중인 사용자 이름입니다." });
     }
 
     const defaultProfileImg = "https://cdn-icons-png.flaticon.com/512/1361/1361876.png";
-    const user = await User.create({
-      userId,
-      password,
-      userName,
-      createdAt: new Date(),
-      profileImg: profileImg || defaultProfileImg,
-      gitUrl: gitUrl || null,
-      introduce: introduce || null,
-    });
-
+    await User.create(
+      {
+        userId,
+        password,
+        userName,
+        createdAt: new Date(),
+        profileImg: profileImg || defaultProfileImg,
+        gitUrl: gitUrl || null,
+        introduce: introduce || null,
+      },
+      { transaction }
+    );
+    await verifyInfo.destroy({ transaction });
+    await transaction.commit();
     res.status(201).json({ message: "회원가입이 성공적으로 이루어졌습니다." });
   } catch (error) {
+    if (transaction) await transaction.rollback();
+    console.log(error);
     res.status(500).json({ error: "회원가입에 실패하였습니다." });
   }
 };
 
 export const getUser = async (req: Request, res: Response) => {
+  const { userId } = req.session;
   try {
-    const user = await User.findByPk(req.params.id);
-    if (user) {
-      res.status(200).json(user);
-    } else {
-      res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
+    if (!userId) {
+      return res.status(401).json({ error: "로그인되지 않았습니다." });
     }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
+    }
+    const { password, ...userWithoutPassword } = user.toJSON();
+    res.status(200).json(userWithoutPassword);
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: "회원 조회에 실패하였습니다." });
   }
 };
@@ -87,10 +110,9 @@ export const checkSession = async (req: Request, res: Response) => {
   }
 
   // 세션에 저장된 사용자 정보로 데이터베이스에서 사용자 조회
-  console.log(req.session.user);
   const user = await User.findByPk(req.session.user.id);
   if (!user) {
-    return res.status(404).json({ error: "사용자를 찾을 수 없다." });
+    return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
   }
 
   res.status(200).json({ message: "세션이 유효합니다.", user: req.session.user });
@@ -139,7 +161,40 @@ export const updateUserName = async (req: Request, res: Response) => {
 
     res.status(200).json({ message: "사용자 이름이 성공적으로 변경되었습니다.", userName: user.userName });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: "사용자 이름 변경 중 오류가 발생했습니다." });
+  }
+};
+
+export const updateUserInfo = async (req: Request, res: Response) => {
+  const { userId } = req.session;
+  const { newProfileImg, newGitUrl, newIntroduce } = req.body;
+
+  try {
+    if (!userId) {
+      return res.status(401).json({ error: "로그인되지 않았습니다." });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
+    }
+
+    if (newProfileImg !== undefined) {
+      user.profileImg = newProfileImg;
+    }
+    if (newGitUrl !== undefined) {
+      user.gitUrl = newGitUrl;
+    }
+    if (newIntroduce !== undefined) {
+      user.introduce = newIntroduce;
+    }
+    await user.save();
+    res.status(200).json({
+      message: "사용자 정보가 성공적으로 변경되었습니다.",
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "사용자 정보 변경 중 오류가 발생했습니다.",
+    });
   }
 };
