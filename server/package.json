@@ -16,6 +16,7 @@
     "express": "^4.19.2",
     "express-mysql-session": "^2.1.4",
     "express-session": "^1.17.1",
+    "express-validator": "^7.1.0",
     "mariadb": "^3.3.1",
     "nodemailer": "^6.9.14",
     "sequelize": "^6.37.3"

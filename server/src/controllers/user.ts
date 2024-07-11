@@ -51,32 +51,19 @@ export const createUser = async (req: Request, res: Response) => {
   }
 };
 
-export const getUser = async (req: Request, res: Response) => {
-  const { userId } = req.session;
-  try {
-    if (!userId) {
-      return res.status(401).json({ error: "로그인되지 않았습니다." });
-    }
-
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
-    }
-    const { password, ...userWithoutPassword } = user.toJSON();
-    res.status(200).json(userWithoutPassword);
-  } catch (error) {
-    res.status(500).json({ error: "회원 조회에 실패하였습니다." });
-  }
+export const getUser = (req: Request, res: Response) => {
+  const user = req.user;
+  const { password, ...userWithoutPassword } = user.toJSON();
+  res.status(200).json(userWithoutPassword);
 };
 
 // 로그인 함수
 export const loginUser = async (req: Request, res: Response) => {
   try {
     const { userId, password } = req.body;
-    const user = await User.findOne({ where: { userId } }); // 찾고
+    const user = await User.findOne({ where: { userId } });
 
     if (!user) {
-      // user가 null인지 확인
       return res.status(401).json({ message: "옳지 않은 아이디 또는 비밀번호 입니다." });
     }
 
@@ -85,7 +72,6 @@ export const loginUser = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "옳지 않은 아이디 또는 비밀번호 입니다." });
     }
 
-    // 세션에 사용자 정보 저장
     req.session.userId = user.id;
     req.session.user = {
       id: user.id,
@@ -95,67 +81,45 @@ export const loginUser = async (req: Request, res: Response) => {
       gitUrl: user.gitUrl,
       introduce: user.introduce,
     };
-    console.log("User Logged In: ", user);
-    // console.log("Session Data: ", req.session);
 
     res.status(200).json({ message: "로그인에 성공하셨습니다.", userId: user.id });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: "로그인에 실패하셨습니다." });
   }
 };
-export const checkSession = async (req: Request, res: Response) => {
+
+export const checkSession = (req: Request, res: Response) => {
   if (!req.session.user) {
     return res.status(401).json({ message: "세션이 유효하지 않습니다." });
   }
-
-  // 세션에 저장된 사용자 정보로 데이터베이스에서 사용자 조회
-  const user = await User.findByPk(req.session.user.id);
-  if (!user) {
-    return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
-  }
-
   res.status(200).json({ message: "세션이 유효합니다.", user: req.session.user });
 };
 
 // 로그아웃 함수
-export const logoutUser = async (req: Request, res: Response) => {
-  console.log(req.session);
+export const logoutUser = (req: Request, res: Response) => {
   req.session.destroy((err) => {
     if (err) {
       return res.status(500).json({ error: "로그아웃에 실패하였습니다." });
     }
-    res.clearCookie("connect.sid"); // 'connect.sid'는 세션 쿠키의 이름입니다.
+    res.clearCookie("connect.sid");
     res.status(200).json({ message: "로그아웃에 성공하셨습니다." });
   });
 };
 
 export const updateUserName = async (req: Request, res: Response) => {
-  const { userId } = req.session;
   const { newUserName } = req.body;
-
-  if (!userId) {
-    return res.status(401).json({ error: "로그인되지 않았습니다." });
-  }
 
   if (!newUserName || typeof newUserName !== "string") {
     return res.status(400).json({ error: "유효하지 않은 사용자 이름입니다." });
   }
 
   try {
-    // 새로운 userName이 이미 존재하는지 확인
     const existingUser = await User.findOne({ where: { userName: newUserName } });
     if (existingUser) {
       return res.status(400).json({ error: "이미 사용 중인 사용자 이름입니다." });
     }
 
-    // 사용자 ID로 사용자 찾기
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
-    }
-
-    // userName 업데이트
+    const user = req.user;
     user.userName = newUserName;
     await user.save();
 
@@ -166,18 +130,10 @@ export const updateUserName = async (req: Request, res: Response) => {
 };
 
 export const updateUserInfo = async (req: Request, res: Response) => {
-  const { userId } = req.session;
   const { newProfileImg, newGitUrl, newIntroduce } = req.body;
 
   try {
-    if (!userId) {
-      return res.status(401).json({ error: "로그인되지 않았습니다." });
-    }
-
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
-    }
+    const user = req.user;
 
     if (newProfileImg !== undefined) {
       user.profileImg = newProfileImg;
@@ -200,16 +156,8 @@ export const updateUserInfo = async (req: Request, res: Response) => {
 };
 
 export const deleteUser = async (req: Request, res: Response) => {
-  const { userId } = req.session;
-
   try {
-    const user = await User.findByPk(userId);
-    if (!userId) {
-      return res.status(401).json({ error: "로그인되지 않았습니다." });
-    }
-    if (!user) {
-      return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
-    }
+    const user = req.user;
     await user.destroy();
     res.status(200).json({ message: "사용자 계정 삭제가 완료되었습니다." });
   } catch (error) {
