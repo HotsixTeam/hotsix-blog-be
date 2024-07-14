@@ -1,7 +1,7 @@
 import { Post } from "./Post";
 import { User } from "./User";
 import { Like } from "./Like";
-import { Verify } from "./Verify";
+import { Comment } from "./Comment";
 // 관계 설정
 Post.belongsTo(User, { foreignKey: "userId", as: "user" });
 Post.hasMany(Like, { foreignKey: "postId", as: "likes" });
@@ -11,3 +11,6 @@ User.hasMany(Like, { foreignKey: "userId", as: "likes" });
 
 Like.belongsTo(Post, { foreignKey: "postId", as: "post" });
 Like.belongsTo(User, { foreignKey: "userId", as: "user" });
+
+Comment.belongsTo(User, { foreignKey: "userId", as: "user" });
+Comment.belongsTo(Post, { foreignKey: "postId", as: "post" });

@@ -3,6 +3,7 @@ import { sequelize } from "./config/database";
 import userRoutes from "./routes/user";
 import postRoutes from "./routes/post";
 import verifyRoutes from "./routes/verify";
+import commentRoutes from "./routes/comment";
 import dotenv from "dotenv";
 import session from "express-session";
 import "./models/associations";
@@ -30,6 +31,7 @@ app.use(
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/verifies", verifyRoutes);
+app.use("/api/comments", commentRoutes);
 
 sequelize
   .authenticate() // 데이터베이스 연결 확인
