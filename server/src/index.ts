@@ -11,7 +11,7 @@ import "./models/associations";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.DB_PORT || 3000; // 환경변수에서 PORT를 가져오거나 기본값으로 3000을 사용
+const PORT = 3000; // 환경변수에서 PORT를 가져오거나 기본값으로 3000을 사용
 
 app.use(express.json()); // JSON 요청 본문을 파싱
 
