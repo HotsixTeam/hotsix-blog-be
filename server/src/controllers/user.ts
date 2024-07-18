@@ -46,14 +46,20 @@ export const createUser = async (req: Request, res: Response) => {
     res.status(201).json({ message: "회원가입이 성공적으로 이루어졌습니다." });
   } catch (error) {
     if (transaction) await transaction.rollback();
-    console.log(error);
     res.status(500).json({ error: "회원가입에 실패하였습니다." });
   }
 };
 
-export const getUser = (req: Request, res: Response) => {
-  const user = req.user;
+export const getUser = async (req: Request, res: Response) => {
+  let user = req.user;
+  const { userId, userName } = req.body;
+  if (userId && userName) {
+    user = await User.findOne({
+      where: userId ? { userId } : { userName },
+    });
+  }
   const { password, ...userWithoutPassword } = user.toJSON();
+
   res.status(200).json(userWithoutPassword);
 };
 
