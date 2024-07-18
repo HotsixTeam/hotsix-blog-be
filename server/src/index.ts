@@ -6,12 +6,22 @@ import verifyRoutes from "./routes/verify";
 import commentRoutes from "./routes/comment";
 import dotenv from "dotenv";
 import session from "express-session";
+import cors from "cors";
+
 import "./models/associations";
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000; // 환경변수에서 PORT를 가져오거나 기본값으로 3000을 사용
+
+// CORS 설정
+app.use(
+  cors({
+    origin: "*",
+    credentials: true, // 쿠키 전송
+  })
+);
 
 app.use(express.json()); // JSON 요청 본문을 파싱
 
@@ -46,5 +56,5 @@ sequelize
     });
   })
   .catch((err) => {
-    console.error("db 접속. 성공적. 이 아님..ㅠ:", err); // 데이터베이스 연결에 실패하면 에러 로그 출력
+    console.error("db 접속:", err); // 데이터베이스 연결에 실패하면 에러 로그 출력
   });
