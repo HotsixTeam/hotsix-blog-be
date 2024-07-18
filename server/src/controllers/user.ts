@@ -129,6 +129,7 @@ export const updateUserName = async (req: Request, res: Response) => {
   }
 };
 
+// 로그인 -> 회원정보 변경 -> 로그인 (실패)
 export const updateUserInfo = async (req: Request, res: Response) => {
   const { newProfileImg, newGitUrl, newIntroduce } = req.body;
 
