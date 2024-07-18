@@ -5,6 +5,7 @@ import { addLike, removeLike } from "../controllers/like";
 const router = Router();
 
 router.route("/").get(getPosts).post(createPost);
+router.get("/user/:userId", getUserPost);
 
 router
   .route("/:id")
@@ -13,5 +14,4 @@ router
   .patch(updatePostById); // 게시글 수정
 
 router.route("/:id/like").post(addLike).delete(removeLike);
-router.get("/user/:userId", getUserPost);
 export default router;
