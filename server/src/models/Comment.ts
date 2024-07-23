@@ -1,5 +1,5 @@
 // models/Comment.ts
-import { Model, DataTypes, Association } from "sequelize";
+import { Model, DataTypes, Association, BelongsToGetAssociationMixin } from "sequelize";
 import { sequelize } from "../config/database";
 import { User } from "./User";
 import { Post } from "./Post";
@@ -11,6 +11,10 @@ export class Comment extends Model {
   public postId!: number;
   public createdAt!: Date;
   public updatedAt!: Date;
+
+  public getUser!: BelongsToGetAssociationMixin<User>;
+
+  public readonly user?: User;
 
   public static associations: {
     user: Association<Comment, User>;

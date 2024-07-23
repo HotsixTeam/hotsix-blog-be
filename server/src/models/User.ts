@@ -2,6 +2,7 @@ import { Model, DataTypes, Association } from "sequelize";
 import { sequelize } from "../config/database";
 import { Post } from "./Post";
 import { Like } from "./Like";
+import { Comment } from "./Comment";
 import bcrypt from "bcrypt";
 
 export class User extends Model {
@@ -17,6 +18,7 @@ export class User extends Model {
   public static associations: {
     posts: Association<User, Post>;
     likes: Association<User, Like>;
+    comments: Association<User, Comment>;
   };
   // 비밀번호 검증 메서드 추가
   public validPassword(password: string): Promise<boolean> {
