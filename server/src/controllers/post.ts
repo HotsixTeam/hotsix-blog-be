@@ -69,13 +69,14 @@ export const getPostById = async (req: Request, res: Response) => {
         {
           model: User,
           as: "user",
-          attributes: ["userName"],
+          attributes: ["id", "userName"],
         },
       ],
     });
     if (post) {
       res.status(200).json({
         id: post.id,
+        userId: post.user ? post.user.id : null,
         author: post.user ? post.user.userName : "Unknown",
         thumb: post.thumb,
         title: post.title,

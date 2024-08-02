@@ -52,12 +52,6 @@ export const createUser = async (req: Request, res: Response) => {
 
 export const getUser = async (req: Request, res: Response) => {
   let user = req.user;
-  const { userId, userName } = req.body;
-  if (userId && userName) {
-    user = await User.findOne({
-      where: userId ? { userId } : { userName },
-    });
-  }
 
   if (!user) {
     return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
@@ -66,6 +60,27 @@ export const getUser = async (req: Request, res: Response) => {
   const { password, ...userWithoutPassword } = user.toJSON();
 
   res.status(200).json(userWithoutPassword);
+};
+
+export const getUserById = async (req: Request, res: Response) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: "유효한 사용자 ID를 입력하세요." });
+    }
+
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "사용자를 찾을 수 없습니다." });
+    }
+
+    const { password, ...userWithoutPassword } = user.toJSON();
+    res.status(200).json(userWithoutPassword);
+  } catch (error) {
+    res.status(500).json({ error: "사용자 정보를 조회하는 중 오류가 발생했습니다." });
+  }
 };
 
 // 로그인 함수
