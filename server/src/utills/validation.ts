@@ -1,4 +1,4 @@
-import { param, validationResult } from "express-validator";
+import { param, query, validationResult } from "express-validator";
 import { Request, Response, NextFunction } from "express";
 import { Post } from "../models/Post";
 import Comment from "../models/Comment";
@@ -54,4 +54,9 @@ export const validateCommentId = [
       return res.status(500).json({ error: "서버 오류가 발생했습니다." });
     }
   },
+];
+
+export const validateSearch = [
+  query("keyword").notEmpty().withMessage("검색어를 입력해주세요."),
+  query("page").optional().isInt({ min: 1 }).withMessage("유효한 페이지 번호를 입력하세요."),
 ];

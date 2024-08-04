@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Post } from "../models/Post";
 import { User } from "../models/User";
 import { fetchPosts } from "../utills/postUtils";
+import { Op } from "sequelize";
 
 // 전체 게시글 조회(비공개는 제외)
 export const getPosts = async (req: Request, res: Response) => {
@@ -147,7 +148,57 @@ export const deletePostById = async (req: Request, res: Response) => {
 
 export const searchPostByKeyword = async (req: Request, res: Response) => {
   try {
+    const keyword = req.query.keyword as string;
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const pageSize = 6; // 페이지당 아이템 수
+    const offset = (page - 1) * pageSize;
+
+    if (!keyword) {
+      return res.status(400).json({ error: "검색어를 입력해주세요." });
+    }
+
+    const { count, rows } = await Post.findAndCountAll({
+      where: {
+        [Op.or]: [{ title: { [Op.like]: `%${keyword}%` } }, { content: { [Op.like]: `%${keyword}%` } }],
+        showStatus: true, // 공개된 게시글만 검색
+      },
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "userName"],
+        },
+      ],
+      limit: pageSize,
+      offset,
+      order: [["createdAt", "DESC"]],
+    });
+
+    const totalPages = Math.ceil(count / pageSize);
+
+    const posts = rows.map((post) => ({
+      id: post.id,
+      author: post.user ? post.user.userName : "Unknown",
+      thumb: post.thumb,
+      title: post.title,
+      description: post.description,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      showStatus: post.showStatus,
+      likeCount: post.likeCount,
+    }));
+
+    res.status(200).json({
+      posts,
+      pagination: {
+        totalItems: count,
+        currentPage: page,
+        totalPages,
+        pageSize,
+      },
+    });
   } catch (error) {
+    console.error("Search error:", error);
     res.status(500).json({ error: "게시글 검색에 실패하였습니다." });
   }
 };
