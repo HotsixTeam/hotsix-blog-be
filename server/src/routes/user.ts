@@ -20,7 +20,7 @@ router
   .get(authenticateUser, getUser) // 현재 로그인된 유저 정보 확인
   .patch(authenticateUser, updateUserInfo) // 현재 로그인된 유저 정보 변경
   .delete(authenticateUser, deleteUser); // 현재 로그인된 유저 계정 삭제
-router.get("/:id", authenticateUser, getUserById);
+router.get("/:id", getUserById);
 router.post("/login", loginUser);
 router.route("/logout").post(authenticateUser, logoutUser); // 현재 로그인된 유저 로그아웃
 router.route("/check-session").get(authenticateUser, checkSession);
