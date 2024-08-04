@@ -188,6 +188,7 @@ export const deleteUser = async (req: Request, res: Response) => {
     await user.destroy();
     res.status(200).json({ message: "사용자 계정 삭제가 완료되었습니다." });
   } catch (error) {
+    console.error(error);
     res.status(500).json({
       error: "사용자 계정 삭제 중 오류가 발생했습니다.",
     });

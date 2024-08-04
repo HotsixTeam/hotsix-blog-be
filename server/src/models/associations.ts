@@ -3,15 +3,15 @@ import { User } from "./User";
 import { Like } from "./Like";
 import { Comment } from "./Comment";
 // 관계 설정
-Post.belongsTo(User, { foreignKey: "userId", as: "user" });
-Post.hasMany(Like, { foreignKey: "postId", as: "likes" });
+Post.belongsTo(User, { foreignKey: "userId", as: "user", onDelete: "CASCADE" });
+Post.hasMany(Like, { foreignKey: "postId", as: "likes", onDelete: "CASCADE" });
 
-User.hasMany(Post, { foreignKey: "userId", as: "posts" });
-User.hasMany(Like, { foreignKey: "userId", as: "likes" });
-User.hasMany(Comment, { as: "comments", foreignKey: "userId" });
+User.hasMany(Post, { foreignKey: "userId", as: "posts", onDelete: "CASCADE" });
+User.hasMany(Like, { foreignKey: "userId", as: "likes", onDelete: "CASCADE" });
+User.hasMany(Comment, { as: "comments", foreignKey: "userId", onDelete: "CASCADE" });
 
-Like.belongsTo(Post, { foreignKey: "postId", as: "post" });
-Like.belongsTo(User, { foreignKey: "userId", as: "user" });
+Like.belongsTo(Post, { foreignKey: "postId", as: "post", onDelete: "CASCADE" });
+Like.belongsTo(User, { foreignKey: "userId", as: "user", onDelete: "CASCADE" });
 
-Comment.belongsTo(User, { foreignKey: "userId", as: "user" });
-Comment.belongsTo(Post, { foreignKey: "postId", as: "post" });
+Comment.belongsTo(User, { foreignKey: "userId", as: "user", onDelete: "CASCADE" });
+Comment.belongsTo(Post, { foreignKey: "postId", as: "post", onDelete: "CASCADE" });
