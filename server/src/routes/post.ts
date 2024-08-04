@@ -7,12 +7,12 @@ import { validate, validatePostId } from "../utills/validation";
 
 const router = Router();
 
-router.route("/").get(getPosts).post(authenticateUser, createPost);
-router.get("/user/:userId", authenticateUser, param("userId").isInt().withMessage("유효한 사용자 ID를 입력하세요."), validate, getUserPost);
+router.route("/").get(getPosts).post(createPost);
+router.get("/user/:userId", param("userId").isInt().withMessage("유효한 사용자 ID를 입력하세요."), validate, getUserPost);
 
 router
   .route("/:id")
-  .get(authenticateUser, validatePostId, validate, getPostById)
+  .get(validatePostId, validate, getPostById)
   .delete(authenticateUser, validatePostId, validate, deletePostById)
   .patch(authenticateUser, validatePostId, validate, updatePostById);
 
