@@ -20,6 +20,6 @@ router
   .route("/:id/like")
   .post(authenticateUser, validatePostId, validate, addLike)
   .delete(authenticateUser, validatePostId, validate, removeLike)
-  .get(authenticateUser, validatePostId, validate, getLike);
+  .get(validatePostId, validate, getLike);
 
 export default router;

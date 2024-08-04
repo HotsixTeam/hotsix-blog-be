@@ -18,7 +18,7 @@ router.post(
 
 router.get("/:id", authenticateUser, validateCommentId, validate, getComment);
 
-router.get("/post/:id", authenticateUser, validatePostId, validate, getCommentsByPost);
+router.get("/post/:id", validatePostId, validate, getCommentsByPost);
 
 router.patch("/:id", authenticateUser, validateCommentId, body("content").notEmpty().withMessage("댓글 내용을 입력하세요."), validate, updateComment);
 
