@@ -2,17 +2,54 @@ import { Request, Response } from "express";
 import { Post } from "../models/Post";
 import { User } from "../models/User";
 import { fetchPosts } from "../utills/postUtils";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
+import { Like } from "../models/Like";
+import { Comment } from "../models/Comment";
 
+// 좋아요 수를 계산하는 함수
+const getLikeCount = async (postId: number): Promise<number> => {
+  return await Like.count({ where: { postId } });
+};
+
+// 댓글 수를 계산하는 함수
+const getCommentCount = async (postId: number): Promise<number> => {
+  return await Comment.count({ where: { postId } });
+};
 // 전체 게시글 조회(비공개는 제외)
 export const getPosts = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string, 10) || 1;
-    const limit = 6; // 6개씩 가져오기
+    const limit = 6;
     const options = {
       where: { showStatus: true },
     };
     const result = await fetchPosts(options, page, limit);
+
+    const postIds = result.posts.map((post) => post.id);
+
+    // 좋아요 수 한 번에 가져오기
+    const likeCounts = await Like.findAll({
+      attributes: ["postId", [Sequelize.fn("COUNT", Sequelize.col("id")), "count"]],
+      where: { postId: postIds },
+      group: ["postId"],
+    });
+
+    // 댓글 수 한 번에 가져오기
+    const commentCounts = await Comment.findAll({
+      attributes: ["postId", [Sequelize.fn("COUNT", Sequelize.col("id")), "count"]],
+      where: { postId: postIds },
+      group: ["postId"],
+    });
+
+    const likeCountMap = new Map(likeCounts.map((like) => [like.get("postId"), like.get("count")]));
+    const commentCountMap = new Map(commentCounts.map((comment) => [comment.get("postId"), comment.get("count")]));
+
+    result.posts = result.posts.map((post) => ({
+      ...post,
+      likeCount: likeCountMap.get(post.id) || 0,
+      commentCount: commentCountMap.get(post.id) || 0,
+    }));
+
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ error: "게시글 조회에 실패하였습니다." });
@@ -25,7 +62,7 @@ export const getUserPost = async (req: Request, res: Response) => {
     const userId = req.session.userId;
     const targetUserId = parseInt(req.params.userId, 10) || 1;
     const page = parseInt(req.query.page as string, 10) || 1;
-    const limit = 6; // 6개씩 가져오기
+    const limit = 6;
     const options: { where: { userId: number; showStatus?: boolean } } = {
       where: { userId: targetUserId },
     };
@@ -33,6 +70,32 @@ export const getUserPost = async (req: Request, res: Response) => {
       options.where.showStatus = true;
     }
     const result = await fetchPosts(options, page, limit);
+
+    const postIds = result.posts.map((post) => post.id);
+
+    // 좋아요 수 한 번에 가져오기
+    const likeCounts = await Like.findAll({
+      attributes: ["postId", [Sequelize.fn("COUNT", Sequelize.col("id")), "count"]],
+      where: { postId: postIds },
+      group: ["postId"],
+    });
+
+    // 댓글 수 한 번에 가져오기
+    const commentCounts = await Comment.findAll({
+      attributes: ["postId", [Sequelize.fn("COUNT", Sequelize.col("id")), "count"]],
+      where: { postId: postIds },
+      group: ["postId"],
+    });
+
+    const likeCountMap = new Map(likeCounts.map((like) => [like.get("postId"), like.get("count")]));
+    const commentCountMap = new Map(commentCounts.map((comment) => [comment.get("postId"), comment.get("count")]));
+
+    result.posts = result.posts.map((post) => ({
+      ...post,
+      likeCount: likeCountMap.get(post.id) || 0,
+      commentCount: commentCountMap.get(post.id) || 0,
+    }));
+
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ error: "유저 게시글 조회에 실패하였습니다." });
@@ -75,6 +138,7 @@ export const getPostById = async (req: Request, res: Response) => {
       ],
     });
     if (post) {
+      const likeCount = await getLikeCount(post.id);
       res.status(200).json({
         id: post.id,
         userId: post.user ? post.user.id : null,
@@ -86,7 +150,7 @@ export const getPostById = async (req: Request, res: Response) => {
         createdAt: post.createdAt,
         updatedAt: post.updatedAt,
         showStatus: post.showStatus,
-        likeCount: post.likeCount,
+        likeCount: likeCount,
       });
     }
   } catch (error) {
@@ -150,7 +214,7 @@ export const searchPostByKeyword = async (req: Request, res: Response) => {
   try {
     const keyword = req.query.keyword as string;
     const page = parseInt(req.query.page as string, 10) || 1;
-    const pageSize = 6; // 페이지당 아이템 수
+    const pageSize = 6;
     const offset = (page - 1) * pageSize;
 
     if (!keyword) {
@@ -160,7 +224,7 @@ export const searchPostByKeyword = async (req: Request, res: Response) => {
     const { count, rows } = await Post.findAndCountAll({
       where: {
         [Op.or]: [{ title: { [Op.like]: `%${keyword}%` } }, { content: { [Op.like]: `%${keyword}%` } }],
-        showStatus: true, // 공개된 게시글만 검색
+        showStatus: true,
       },
       include: [
         {
@@ -176,17 +240,19 @@ export const searchPostByKeyword = async (req: Request, res: Response) => {
 
     const totalPages = Math.ceil(count / pageSize);
 
-    const posts = rows.map((post) => ({
-      id: post.id,
-      author: post.user ? post.user.userName : "Unknown",
-      thumb: post.thumb,
-      title: post.title,
-      description: post.description,
-      createdAt: post.createdAt,
-      updatedAt: post.updatedAt,
-      showStatus: post.showStatus,
-      likeCount: post.likeCount,
-    }));
+    const posts = await Promise.all(
+      rows.map(async (post) => ({
+        id: post.id,
+        author: post.user ? post.user.userName : "Unknown",
+        thumb: post.thumb,
+        title: post.title,
+        description: post.description,
+        createdAt: post.createdAt,
+        updatedAt: post.updatedAt,
+        showStatus: post.showStatus,
+        likeCount: await getLikeCount(post.id),
+      }))
+    );
 
     res.status(200).json({
       posts,
@@ -198,7 +264,6 @@ export const searchPostByKeyword = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("Search error:", error);
     res.status(500).json({ error: "게시글 검색에 실패하였습니다." });
   }
 };
